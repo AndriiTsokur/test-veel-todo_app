@@ -29,7 +29,6 @@ export const createTodo = async (title: string) => {
 export const deleteTodo = async (id: number) => {
 	try {
 		await axios.delete(`${API_URL}/${id}`);
-		return id; // Return the deleted ID for optimistic updates
 	} catch (error) {
 		console.error('Error deleting todo:', error);
 		throw error;

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 
 interface TodoFormProps {
@@ -22,7 +24,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onAdd }) => {
 				value={title}
 				onChange={(e) => setTitle(e.target.value)}
 				placeholder='Add new todo...'
-				className='border p-2 mr-2 rounded focus:outline-none focus:ring focus:border-blue-300'
+				className='w-1/2 border p-2 mr-2 rounded focus:outline-none focus:ring focus:border-blue-300'
 			/>
 			<button
 				type='submit'

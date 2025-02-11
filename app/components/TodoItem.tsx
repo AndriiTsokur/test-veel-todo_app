@@ -24,7 +24,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
 			<span
 				onClick={() => onToggleComplete(id)}
 				className={`flex-grow cursor-pointer ${
-					completed ? 'line-through text-gray-500' : ''
+					completed && 'line-through text-gray-500'
 				}`}
 			>
 				{title}
