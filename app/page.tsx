@@ -8,11 +8,11 @@ import {
 	setTodosToLocalStorage,
 	getTodosTimestampFromLocalStorage,
 } from '@/app/lib/utils/localStorage';
-import { loadTodos } from '@/app/lib/utils/todoHandlers';
+import { Todo } from '@/app/lib/interfaces';
 import { TodoList, TodoForm } from '@/app/components';
 
 const Page: React.FC = () => {
-	const [todos, setTodos] = useState<any[]>([]);
+	const [todos, setTodos] = useState<Todo[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,7 @@ const Page: React.FC = () => {
 					setTodosToLocalStorage(apiTodos); // Save new todos to local storage
 				} else {
 					// Load from local storage
-					setTodos(storedTodos.todos);
+					setTodos(storedTodos);
 				}
 			} catch (err: any) {
 				setError(err.message || 'Failed to fetch todos.');
@@ -50,7 +50,7 @@ const Page: React.FC = () => {
 		try {
 			const newTodo = await createTodo(title);
 			setTodos((prevTodos) => [...prevTodos, newTodo]);
-			setTodosToLocalStorage([...todos, newTodo]); // Save updated todos to local storage
+			setTodosToLocalStorage([...todos, newTodo]);
 		} catch (err: any) {
 			setError(err.message || 'Failed to add new todo.');
 		}
@@ -60,7 +60,7 @@ const Page: React.FC = () => {
 		try {
 			await deleteTodo(id);
 			setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
-			setTodosToLocalStorage(todos.filter((todo) => todo.id !== id)); // Save updated todos to local storage
+			setTodosToLocalStorage(todos.filter((todo) => todo.id !== id));
 		} catch (err: any) {
 			setError(err.message || 'Failed to delete todo.');
 		}
@@ -70,7 +70,7 @@ const Page: React.FC = () => {
 		try {
 			const updatedTodos = todos.map((todo) => {
 				if (todo.id === id) {
-					todo.completed = !todo.completed;
+					return { ...todo, completed: !todo.completed };
 				}
 				return todo;
 			});

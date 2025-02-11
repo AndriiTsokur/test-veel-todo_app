@@ -1,10 +1,11 @@
 import React from 'react';
+import { Todo } from '@/app/lib/interfaces';
 import { TodoItem } from '@/app/components';
 
 interface TodoListProps {
-	todos: any[];
+	todos: Todo[];
 	onDelete: (id: number) => void;
-	onToggleComplete: (id: number) => void; // Добавляем обработчик для переключения
+	onToggleComplete: (id: number) => void;
 }
 
 const TodoList: React.FC<TodoListProps> = ({
@@ -21,7 +22,7 @@ const TodoList: React.FC<TodoListProps> = ({
 					title={todo.title}
 					completed={todo.completed}
 					onDelete={onDelete}
-					onToggleComplete={onToggleComplete} // Передаём обработчик в TodoItem
+					onToggleComplete={onToggleComplete}
 				/>
 			))}
 		</ul>
