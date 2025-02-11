@@ -1,101 +1,107 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { fetchTodos, createTodo, deleteTodo } from '@/app/api/todos';
+import {
+	getTodosFromLocalStorage,
+	setTodosToLocalStorage,
+	getTodosTimestampFromLocalStorage,
+} from '@/app/lib/utils/localStorage';
+import { loadTodos } from '@/app/lib/utils/todoHandlers';
+import { TodoList, TodoForm } from '@/app/components';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
-}
+const Page: React.FC = () => {
+	const [todos, setTodos] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const loadTodos = async () => {
+			setLoading(true);
+			try {
+				// Retrieve timestamp from local storage
+				const lastSessionTimestamp = getTodosTimestampFromLocalStorage();
+
+				// Fetch todos from local storage
+				const storedTodos = getTodosFromLocalStorage();
+
+				// Fetch todos from API only if no local storage or data is old.
+				// Or when the app first open.
+				if (!storedTodos || !lastSessionTimestamp) {
+					const apiTodos = await fetchTodos();
+					setTodos(apiTodos);
+					setTodosToLocalStorage(apiTodos); // Save new todos to local storage
+				} else {
+					// Load from local storage
+					setTodos(storedTodos.todos);
+				}
+			} catch (err: any) {
+				setError(err.message || 'Failed to fetch todos.');
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadTodos();
+	}, []);
+
+	const handleAddTodo = async (title: string) => {
+		try {
+			const newTodo = await createTodo(title);
+			setTodos((prevTodos) => [...prevTodos, newTodo]);
+			setTodosToLocalStorage([...todos, newTodo]); // Save updated todos to local storage
+		} catch (err: any) {
+			setError(err.message || 'Failed to add new todo.');
+		}
+	};
+
+	const handleDeleteTodo = async (id: number) => {
+		try {
+			await deleteTodo(id);
+			setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+			setTodosToLocalStorage(todos.filter((todo) => todo.id !== id)); // Save updated todos to local storage
+		} catch (err: any) {
+			setError(err.message || 'Failed to delete todo.');
+		}
+	};
+
+	const handleToggleComplete = async (id: number) => {
+		try {
+			const updatedTodos = todos.map((todo) => {
+				if (todo.id === id) {
+					todo.completed = !todo.completed;
+				}
+				return todo;
+			});
+			setTodos(updatedTodos);
+			setTodosToLocalStorage(updatedTodos);
+			await axios.patch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+				completed: updatedTodos.find((todo) => todo.id === id)?.completed,
+			});
+		} catch (err: any) {
+			setError(err.message || 'Failed to update todo.');
+		}
+	};
+
+	if (loading) {
+		return <p>Loading todos...</p>;
+	}
+	if (error) {
+		return <p className='text-red-500'>Error: {error}</p>;
+	}
+
+	return (
+		<main className='container mx-auto p-4'>
+			<h1 className='text-2xl font-bold mb-4'>Todo App For Veel</h1>
+			<TodoForm onAdd={handleAddTodo} />
+			<TodoList
+				todos={todos}
+				onDelete={handleDeleteTodo}
+				onToggleComplete={handleToggleComplete}
+			/>
+		</main>
+	);
+};
+
+export default Page;
