@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { fetchTodos, createTodo, deleteTodo } from '@/app/api/todos';
 import {
 	getTodosFromLocalStorage,
@@ -36,8 +36,12 @@ const Page: React.FC = () => {
 					// Load from local storage
 					setTodos(storedTodos);
 				}
-			} catch (err: any) {
-				setError(err.message || 'Failed to fetch todos.');
+			} catch (err: unknown) {
+				if (err instanceof Error) {
+					setError(err.message);
+				} else {
+					setError('Failed to fetch todos.');
+				}
 			} finally {
 				setLoading(false);
 			}
@@ -51,8 +55,12 @@ const Page: React.FC = () => {
 			const newTodo = await createTodo(title);
 			setTodos((prevTodos) => [...prevTodos, newTodo]);
 			setTodosToLocalStorage([...todos, newTodo]);
-		} catch (err: any) {
-			setError(err.message || 'Failed to add new todo.');
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				setError(err.message);
+			} else {
+				setError('Failed to add new todo.');
+			}
 		}
 	};
 
@@ -61,8 +69,12 @@ const Page: React.FC = () => {
 			await deleteTodo(id);
 			setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
 			setTodosToLocalStorage(todos.filter((todo) => todo.id !== id));
-		} catch (err: any) {
-			setError(err.message || 'Failed to delete todo.');
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				setError(err.message);
+			} else {
+				setError('Failed to delete todo.');
+			}
 		}
 	};
 
@@ -79,8 +91,15 @@ const Page: React.FC = () => {
 			await axios.patch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
 				completed: updatedTodos.find((todo) => todo.id === id)?.completed,
 			});
-		} catch (err: any) {
-			setError(err.message || 'Failed to update todo.');
+		} catch (err: unknown) {
+			if (axios.isAxiosError(err)) {
+				const axiosError = err as AxiosError;
+				setError(axiosError.message || 'Failed to update todo.');
+			} else if (err instanceof Error) {
+				setError(err.message);
+			} else {
+				setError('Failed to update todo.');
+			}
 		}
 	};
 
